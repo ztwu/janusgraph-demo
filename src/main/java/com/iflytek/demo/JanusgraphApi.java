@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Iterator;
 import java.util.List;
 
+//graph内置到java中
 public class JanusgraphApi {
     private static JanusGraph graph;
 

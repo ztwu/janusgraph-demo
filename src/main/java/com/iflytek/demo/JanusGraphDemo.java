@@ -28,6 +28,7 @@ public class JanusGraphDemo {
 //            queryDemo4();
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println(e);
         }
     }
 
@@ -40,14 +41,18 @@ public class JanusGraphDemo {
 
     public static void queryDemo2() throws Exception {
         GraphTraversalSource g = traversal().withRemote("conf/remote-graph.properties");
-        Object herculesAge = g.V().has("name", "hercules").values("age");
+        Object herculesAge = g.V().has("name", "john").values("age");
         System.out.println("Hercules is " + herculesAge + " years old.");
     }
 
-    public static void queryDemo3(){
+    public static void queryDemo3() throws Exception {
         GraphTraversalSource g = traversal().withRemote(DriverRemoteConnection.using("192.168.56.101",8182,"g"));
-        Object herculesAge = g.V().has("name", "hercules").values("age");
+        g.addV("test")
+                .property("name","yuxj")
+                .property("age",45).iterate();
+        Object herculesAge = g.V().has("name", "yuxj").values("age").next();
         System.out.println("Hercules is " + herculesAge + " years old.");
+        g.close();
     }
 
     public static void queryDemo4() throws Exception {
@@ -58,14 +63,14 @@ public class JanusGraphDemo {
 
         Map<String,Object> params = new HashMap<>();
         params.put("x",4);
-//        List<Result> result = client.submit("[1,2,3,x]",params).all().get();
-        List<Result> result = client.submit("mgmt = graph.openManagement()").all().get();
+        List<Result> result = client.submit("[1,2,3,x]",params).all().get();
+//        List<Result> result = client.submit("mgmt = graph.openManagement()").all().get();
         for(Result rs:result){
             System.out.println(rs.getObject());
         }
 
         GraphTraversalSource g = traversal().withRemote(DriverRemoteConnection.using(client, "g"));
-        Object herculesAge = g.V().has("name", "hercules").values("age");
+        Object herculesAge = g.V().has("name", "yuxj").values("age");
         System.out.println("Hercules is " + herculesAge + " years old.");
 
         client.close();
