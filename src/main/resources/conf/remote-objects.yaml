@@ -1,0 +1,8 @@
+hosts: [192.168.56.101]
+port: 8182
+serializer: {
+  className: org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV3d0,
+  config: {
+    serializeResultToString: true
+  }
+}
