@@ -18,14 +18,15 @@ import java.util.concurrent.ExecutionException;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal;
 
+// janusgraph远程服务
 public class JanusGraphDemo {
 
     public static void main(String[] args) {
         try {
 //            queryDemo1();
 //            queryDemo2();
-            queryDemo3();
-//            queryDemo4();
+//            queryDemo3();
+            queryDemo4();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e);
@@ -35,14 +36,17 @@ public class JanusGraphDemo {
     public static void queryDemo1() throws Exception {
         Cluster cluster = Cluster.open("src/main/resources/conf/remote-objects.yaml");
         GraphTraversalSource g = traversal().withRemote(DriverRemoteConnection.using(cluster, "g"));
-        Object herculesAge = g.V().has("name", "hercules").values("age");
+        Object herculesAge = g.V().has("name", "yuxj").values("age").toList();
         System.out.println("Hercules is " + herculesAge + " years old.");
+        g.close();
+        cluster.close();
     }
 
     public static void queryDemo2() throws Exception {
         GraphTraversalSource g = traversal().withRemote("conf/remote-graph.properties");
-        Object herculesAge = g.V().has("name", "john").values("age");
+        Object herculesAge = g.V().has("name", "yuxj").values("age").toList();
         System.out.println("Hercules is " + herculesAge + " years old.");
+        g.close();
     }
 
     public static void queryDemo3() throws Exception {
@@ -50,11 +54,12 @@ public class JanusGraphDemo {
         g.addV("test")
                 .property("name","yuxj")
                 .property("age",45).iterate();
-        Object herculesAge = g.V().has("name", "yuxj").values("age").next();
+        Object herculesAge = g.V().has("name", "yuxj").values("age").toList();
         System.out.println("Hercules is " + herculesAge + " years old.");
         g.close();
     }
 
+//    提交gremlin-sql
     public static void queryDemo4() throws Exception {
         // 出现未注册类的情况肯定是应用端反序列化时无法找到对应类。因此考虑如何将类注册到kryo中去
         // 注册类：org.janusgraph.graphdb.relations.RelationIdentifier到配置文件中去。
@@ -63,16 +68,16 @@ public class JanusGraphDemo {
 
         Map<String,Object> params = new HashMap<>();
         params.put("x",4);
-        List<Result> result = client.submit("[1,2,3,x]",params).all().get();
+        List<Result> result = client.submit("g.V().toList()").all().get();
+//        List<Result> result = client.submit("[1,2,3,x]",params).all().get();
 //        List<Result> result = client.submit("mgmt = graph.openManagement()").all().get();
         for(Result rs:result){
             System.out.println(rs.getObject());
         }
 
         GraphTraversalSource g = traversal().withRemote(DriverRemoteConnection.using(client, "g"));
-        Object herculesAge = g.V().has("name", "yuxj").values("age");
+        Object herculesAge = g.V().has("name", "yuxj").values("age").toList();
         System.out.println("Hercules is " + herculesAge + " years old.");
-
         client.close();
         cluster.close();
 
