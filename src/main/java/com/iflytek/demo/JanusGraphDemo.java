@@ -1,9 +1,6 @@
 package com.iflytek.demo;
 
-import org.apache.tinkerpop.gremlin.driver.Client;
-import org.apache.tinkerpop.gremlin.driver.Cluster;
-import org.apache.tinkerpop.gremlin.driver.MessageSerializer;
-import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV3d0;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -11,9 +8,8 @@ import org.apache.tinkerpop.gremlin.structure.io.IoRegistry;
 import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoMapper;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphIoRegistry;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal;
@@ -26,7 +22,8 @@ public class JanusGraphDemo {
 //            queryDemo1();
 //            queryDemo2();
 //            queryDemo3();
-            queryDemo4();
+//            queryDemo4();
+            queryDemo5();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e);
@@ -68,10 +65,6 @@ public class JanusGraphDemo {
         params.put("x",4);
         List<Result> result = client.submit("g.V().toList()").all().get();
 //        List<Result> result = client.submit("[1,2,3,x]",params).all().get();
-
-        // 出现未注册类的情况肯定是应用端反序列化时无法找到对应类。因此考虑如何将类注册到kryo中去
-        // 注册类：org.janusgraph.graphdb.relations.RelationIdentifier到配置文件中去。
-//        List<Result> result = client.submit("mgmt = graph.openManagement()").all().get();
         for(Result rs:result){
             System.out.println(rs.getObject());
         }
@@ -79,6 +72,34 @@ public class JanusGraphDemo {
         GraphTraversalSource g = traversal().withRemote(DriverRemoteConnection.using(client, "g"));
         Object herculesAge = g.V().has("name", "yuxj").values("age").toList();
         System.out.println("Hercules is " + herculesAge + " years old.");
+        client.close();
+        cluster.close();
+
+    }
+
+    //    提交gremlin-sql
+    public static void queryDemo5() throws Exception {
+        Cluster cluster = Cluster.open("src/main/resources/conf/remote-objects.yaml");
+        Client client = cluster.connect();
+
+//      使用模板来创建新图减少重复输入形同配置，这里不需要添加graph.graphname配置项
+        String gremlin_sql =
+                "map = new HashMap<String, Object>();" +
+                "map.put(\"storage.backend\", \"hbase\");" +
+                "map.put(\"storage.hostname\", \"172.16.0.10\");" +
+                "map.put(\"index.search.backend\", \"elasticsearch\");" +
+                "map.put(\"index.search.hostname\", \"172.18.0.10\");" +
+                "ConfiguredGraphFactory.updateConfiguration(\"graphztwu10\",new MapConfiguration(map));" +
+//                "ConfiguredGraphFactory.createTemplateConfiguration(new MapConfiguration(map));" +
+                "ConfiguredGraphFactory.create(\"graphztwu10\");" +
+                "ConfiguredGraphFactory.open(\"graphztwu10\");";
+        CompletableFuture<ResultSet> rs = client.submitAsync(gremlin_sql);
+        System.out.println(rs.isCompletedExceptionally());
+        rs.whenCompleteAsync((result, e) -> {
+                    System.out.println(result);
+                    System.out.println(e);
+                });
+
         client.close();
         cluster.close();
 
