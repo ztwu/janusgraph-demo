@@ -61,8 +61,6 @@ public class JanusGraphDemo {
 
 //    提交gremlin-sql
     public static void queryDemo4() throws Exception {
-        // 出现未注册类的情况肯定是应用端反序列化时无法找到对应类。因此考虑如何将类注册到kryo中去
-        // 注册类：org.janusgraph.graphdb.relations.RelationIdentifier到配置文件中去。
         Cluster cluster = Cluster.open("src/main/resources/conf/remote-objects.yaml");
         Client client = cluster.connect();
 
@@ -70,6 +68,9 @@ public class JanusGraphDemo {
         params.put("x",4);
         List<Result> result = client.submit("g.V().toList()").all().get();
 //        List<Result> result = client.submit("[1,2,3,x]",params).all().get();
+
+        // 出现未注册类的情况肯定是应用端反序列化时无法找到对应类。因此考虑如何将类注册到kryo中去
+        // 注册类：org.janusgraph.graphdb.relations.RelationIdentifier到配置文件中去。
 //        List<Result> result = client.submit("mgmt = graph.openManagement()").all().get();
         for(Result rs:result){
             System.out.println(rs.getObject());
